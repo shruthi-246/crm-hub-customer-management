@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Hub | Customer Management</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Arial,sans-serif}
+:root{--navy:#172554;--blue:#2563eb;--bg:#f3f6fb;--text:#263247;--muted:#718096}
+body{background:var(--bg);color:var(--text)}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:245px;background:var(--navy);color:white;padding:28px 18px;flex-shrink:0}
+.brand{font-size:25px;font-weight:700;margin-bottom:8px}
+.brand span{color:#60a5fa}
+.sidebar-subtitle{color:#b9c6e5;font-size:12px;margin-bottom:38px}
+.nav-item{display:block;width:100%;border:0;background:transparent;color:#dbeafe;text-align:left;padding:13px 15px;border-radius:8px;margin-bottom:10px;cursor:pointer;font-size:14px}
+.nav-item:hover,.nav-item.active{background:var(--blue);color:white}
+.main{flex:1;min-width:0;padding:30px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:28px}
+h1{font-size:27px;margin-bottom:7px}
+.muted{color:var(--muted);font-size:14px}
+.profile-wrap{position:relative}
+.profile{background:white;color:var(--text);padding:11px 16px;border-radius:10px;font-size:14px;border:1px solid #e8edf5}
+.profile-menu{display:none;position:absolute;right:0;top:48px;background:white;padding:16px;width:230px;border-radius:10px;box-shadow:0 5px 25px #17255420;z-index:10}
+.profile-menu.show{display:block}
+.profile-menu p{margin-bottom:10px;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-bottom:25px}
+.stat-card,.panel{background:white;border:1px solid #e8edf5;border-radius:14px;box-shadow:0 3px 14px #1725540a}
+.stat-card{padding:24px;cursor:pointer;transition:.2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 5px 18px #17255415}
+.stat-icon{font-size:25px;margin-bottom:12px}
+.stat-label{color:var(--muted);font-size:14px;margin-bottom:14px}
+.stat-number{font-size:32px;font-weight:700;color:var(--navy)}
+.panel{padding:25px;margin-bottom:25px}
+.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:22px}
+.panel-heading h2{font-size:19px;margin-bottom:5px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-size:13px;font-weight:600}
+.field input,.field textarea{width:100%;border:1px solid #dce3ee;border-radius:8px;padding:12px;outline:none;background:white;font-size:14px}
+.field input:focus,.field textarea:focus,.search-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2563eb18}
+.field textarea{resize:vertical;min-height:75px}
+.button-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+button{border:0;border-radius:8px;padding:11px 16px;cursor:pointer;font-size:13px;font-weight:600}
+.primary-btn{background:var(--blue);color:white}
+.primary-btn:hover{background:#1d4ed8}
+.secondary-btn{background:#edf2f7;color:#334155}
+.edit-btn{background:#dbeafe;color:#1d4ed8;margin-right:5px}
+.delete-btn{background:#fee2e2;color:#b91c1c}
+.search-input{width:100%;max-width:400px;padding:11px 13px;border:1px solid #dce3ee;border-radius:8px;outline:none;font-size:13px}
+.table-wrapper{width:100%;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th{text-align:left;padding:14px 12px;background:#f8fafc;color:#64748b;font-size:12px;text-transform:uppercase}
+td{padding:14px 12px;border-bottom:1px solid #edf1f7;font-size:13px;overflow-wrap:anywhere}
+.customer-name{font-weight:600;color:#1e293b}
+.status-message{padding:12px 14px;margin-bottom:18px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:13px;display:none;overflow-wrap:anywhere}
+.status-message.error{background:#fef2f2;color:#b91c1c}
+.empty-state{text-align:center;color:var(--muted);padding:28px}
+.page{display:none}
+.page.active{display:block}
+.settings-row{padding:16px 0;border-bottom:1px solid #edf1f7}
+.settings-row:last-child{border-bottom:0}
+footer{text-align:center;color:#94a3b8;font-size:12px;padding:10px}
+@media(max-width:850px){.sidebar{width:190px}.main{padding:20px}.stats{grid-template-columns:1fr}}
+@media(max-width:600px){.layout{display:block}.sidebar{width:100%;padding:20px}.sidebar-subtitle{margin-bottom:15px}.main{padding:15px}.form-grid{grid-template-columns:1fr}.panel{padding:17px}h1{font-size:23px}}
+</style>
+</head>
+
+<body>
+<div class="layout">
+<aside class="sidebar">
+    <div class="brand">C<span>RM</span> Hub</div>
+    <div class="sidebar-subtitle">Customer Management System</div>
+    <button class="nav-item active" data-page="dashboard">▦ &nbsp; Dashboard</button>
+    <button class="nav-item" data-page="customers">♙ &nbsp; Customers</button>
+    <button class="nav-item" data-page="settings">⚙ &nbsp; Settings</button>
+</aside>
+
+<main class="main">
+<header class="topbar">
+    <div>
+        <h1 id="pageTitle">Customer Dashboard</h1>
+        <p class="muted" id="pageSubtitle">Manage your customer relationships in one place.</p>
+    </div>
+
+    <div class="profile-wrap">
+        <button type="button" class="profile" id="adminProfile">👤 &nbsp; Administrator ▾</button>
+        <div class="profile-menu" id="profileMenu">
+            <p><strong>Administrator Profile</strong></p>
+            <p>Role: Administrator</p>
+            <p>System: CRM Hub</p>
+            <p class="muted">Local demo profile. Login authentication is not configured.</p>
+            <button type="button" class="secondary-btn" id="closeProfile">Close</button>
+        </div>
+    </div>
+</header>
+
+<div id="globalMessage" class="status-message" role="status"></div>
+
+<section class="page active" id="dashboard">
+    <div class="stats">
+        <div class="stat-card" role="button" tabindex="0" data-filter="all">
+            <div class="stat-icon">👥</div>
+            <div class="stat-label">Total Customers · Click to view</div>
+            <div class="stat-number" id="totalCustomers">—</div>
+        </div>
+        <div class="stat-card" role="button" tabindex="0" data-filter="email">
+            <div class="stat-icon">✉️</div>
+            <div class="stat-label">Customers With Email · Click to view</div>
+            <div class="stat-number" id="emailCustomers">—</div>
+        </div>
+        <div class="stat-card" role="button" tabindex="0" data-filter="phone">
+            <div class="stat-icon">📱</div>
+            <div class="stat-label">Customers With Phone · Click to view</div>
+            <div class="stat-number" id="phoneCustomers">—</div>
+        </div>
+    </div>
+
+    <section class="panel" id="customerFormPanel">
+        <div class="panel-heading">
+            <div>
+                <h2 id="formTitle">Add New Customer</h2>
+                <p class="muted">Enter customer details below.</p>
+            </div>
+        </div>
+
+        <div id="formMessage" class="status-message" role="status"></div>
+
+        <form id="customerForm">
+            <input type="hidden" id="customerId">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="customerName">Customer Name *</label>
+                    <input id="customerName" required maxlength="150" placeholder="Enter full name">
+                </div>
+                <div class="field">
+                    <label for="customerEmail">Email Address *</label>
+                    <input id="customerEmail" type="email" required maxlength="200" placeholder="customer@example.com">
+                </div>
+                <div class="field">
+                    <label for="customerPhone">Phone Number</label>
+                    <input id="customerPhone" type="tel" maxlength="30" placeholder="Enter phone number">
+                </div>
+                <div class="field">
+                    <label for="customerAddress">Address</label>
+                    <textarea id="customerAddress" maxlength="500" placeholder="Enter customer address"></textarea>
+                </div>
+            </div>
+            <div class="button-row">
+                <button type="submit" class="primary-btn" id="submitButton">+ Add Customer</button>
+                <button type="button" class="secondary-btn" id="clearButton">Clear Form</button>
+            </div>
+        </form>
+    </section>
+</section>
+
+<section class="page" id="customers">
+    <section class="panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Customer Directory</h2>
+                <p class="muted" id="directorySubtitle">Search and manage your customer records.</p>
+            </div>
+            <button type="button" class="primary-btn" id="newCustomerButton">+ Add Customer</button>
+        </div>
+        <input type="search" id="searchInput" class="search-input" placeholder="Search by ID, name, email, phone or address...">
+        <div id="directoryMessage" class="status-message" role="status"></div>
+        <div class="table-wrapper" style="margin-top:20px">
+            <table>
+                <thead><tr>
+                    <th>ID</th><th>Customer</th><th>Email</th><th>Phone</th><th>Address</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="customerTableBody">
+                    <tr><td colspan="6" class="empty-state">Loading customers...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+
+<section class="page" id="settings">
+    <section class="panel">
+        <div class="panel-heading">
+            <div><h2>Settings</h2><p class="muted">Application information and connection status.</p></div>
+        </div>
+        <div class="settings-row"><strong>Application</strong><p class="muted">CRM Hub — Customer Management System</p></div>
+        <div class="settings-row"><strong>Backend</strong><p class="muted">Spring Boot — <span id="backendStatus">Checking connection...</span></p></div>
+        <div class="settings-row"><strong>Customer API</strong><p class="muted">GET, POST, PUT, DELETE /customers</p></div>
+        <div class="settings-row"><strong>Database</strong><p class="muted">MySQL — crm_database</p></div>
+        <div class="button-row"><button type="button" class="primary-btn" id="refreshButton">Refresh Customer Data</button></div>
+    </section>
+</section>
+
+<footer>CRM Hub · Customer Relationship Management System</footer>
+</main>
+</div>
+
+<script>
+const API_URL = "/customers";
+let customers = [];
+let currentFilter = "all";
+
+const tableBody = document.getElementById("customerTableBody");
+const searchInput = document.getElementById("searchInput");
+
+function showMessage(id, message, isError = false) {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.classList.toggle("error", isError);
+    el.style.display = "block";
+}
+function hideMessage(id) {
+    const el = document.getElementById(id);
+    el.style.display = "none";
+    el.classList.remove("error");
+}
+function getId(c) {
+    return c.customer_id ?? c.customerId ?? c.id;
+}
+function switchPage(name) {
+    document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === name));
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.page === name));
+
+    const titles = {
+        dashboard: ["Customer Dashboard", "Manage your customer relationships in one place."],
+        customers: ["Customer Directory", "Search, edit and manage your customer records."],
+        settings: ["Settings", "Application information and connection status."]
+    };
+    document.getElementById("pageTitle").textContent = titles[name][0];
+    document.getElementById("pageSubtitle").textContent = titles[name][1];
+}
+
+document.querySelectorAll(".nav-item").forEach(b => {
+    b.addEventListener("click", () => switchPage(b.dataset.page));
+});
+
+function updateStatistics() {
+    document.getElementById("totalCustomers").textContent = customers.length;
+    document.getElementById("emailCustomers").textContent = customers.filter(c => String(c.email ?? "").trim() !== "").length;
+    document.getElementById("phoneCustomers").textContent = customers.filter(c => String(c.phone ?? "").trim() !== "").length;
+}
+
+function createCell(value, className) {
+    const td = document.createElement("td");
+    td.textContent = value === null || value === undefined || value === "" ? "—" : value;
+    if (className) td.className = className;
+    return td;
+}
+
+function renderCustomers() {
+    const q = searchInput.value.trim().toLowerCase();
+
+    let list = customers.filter(c => {
+        if (currentFilter === "email" && !String(c.email ?? "").trim()) return false;
+        if (currentFilter === "phone" && !String(c.phone ?? "").trim()) return false;
+        return true;
+    });
+
+    list = list.filter(c => [
+        getId(c), c.name, c.email, c.phone, c.address
+    ].join(" ").toLowerCase().includes(q));
+
+    tableBody.replaceChildren();
+
+    if (!list.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 6;
+        td.className = "empty-state";
+        td.textContent = customers.length ? "No matching customers found." : "No customers found.";
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+        return;
+    }
+
+    list.forEach(c => {
+        const tr = document.createElement("tr");
+        const id = getId(c);
+        tr.appendChild(createCell(id));
+        tr.appendChild(createCell(c.name, "customer-name"));
+        tr.appendChild(createCell(c.email));
+        tr.appendChild(createCell(c.phone));
+        tr.appendChild(createCell(c.address));
+
+        const actions = document.createElement("td");
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "edit-btn";
+        edit.textContent = "Edit";
+        edit.addEventListener("click", () => editCustomer(c));
+
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "delete-btn";
+        del.textContent = "Delete";
+        del.addEventListener("click", () => deleteCustomer(id));
+
+        actions.append(edit, del);
+        tr.appendChild(actions);
+        tableBody.appendChild(tr);
+    });
+}
+
+async function loadCustomers() {
+    hideMessage("directoryMessage");
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        if (!Array.isArray(data)) throw new Error("Customer API did not return a list.");
+
+        customers = data;
+        document.getElementById("backendStatus").textContent = "Connected";
+        updateStatistics();
+        renderCustomers();
+    } catch (e) {
+        console.error(e);
+        document.getElementById("backendStatus").textContent = "Connection failed";
+        showMessage("directoryMessage", "Could not load customers. Check Spring Boot and GET /customers. " + e.message, true);
+    }
+}
+
+function resetForm() {
+    document.getElementById("customerForm").reset();
+    document.getElementById("customerId").value = "";
+    document.getElementById("formTitle").textContent = "Add New Customer";
+    document.getElementById("submitButton").textContent = "+ Add Customer";
+    hideMessage("formMessage");
+}
+
+function editCustomer(c) {
+    document.getElementById("customerId").value = getId(c);
+    document.getElementById("customerName").value = c.name ?? "";
+    document.getElementById("customerEmail").value = c.email ?? "";
+    document.getElementById("customerPhone").value = c.phone ?? "";
+    document.getElementById("customerAddress").value = c.address ?? "";
+    document.getElementById("formTitle").textContent = "Edit Customer";
+    document.getElementById("submitButton").textContent = "Save Changes";
+    hideMessage("formMessage");
+    switchPage("dashboard");
+    document.getElementById("customerFormPanel").scrollIntoView({behavior:"smooth"});
+}
+
+async function deleteCustomer(id) {
+    if (id === null || id === undefined) {
+        showMessage("directoryMessage", "Customer ID is missing. Nothing was deleted.", true);
+        return;
+    }
+    if (!confirm("Delete customer ID " + id + "? This cannot be undone.")) return;
+
+    try {
+        const response = await fetch(API_URL + "/" + encodeURIComponent(id), {method:"DELETE"});
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        showMessage("directoryMessage", "Customer deleted successfully.");
+        await loadCustomers();
+    } catch (e) {
+        showMessage("directoryMessage", "Delete failed: " + e.message, true);
+    }
+}
+
+document.getElementById("customerForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    hideMessage("formMessage");
+
+    const id = document.getElementById("customerId").value;
+    const data = {
+        name: document.getElementById("customerName").value.trim(),
+        email: document.getElementById("customerEmail").value.trim(),
+        phone: document.getElementById("customerPhone").value.trim(),
+        address: document.getElementById("customerAddress").value.trim()
+    };
+
+    if (!data.name || !data.email) {
+        showMessage("formMessage", "Please enter the customer name and email.", true);
+        return;
+    }
+
+    const button = document.getElementById("submitButton");
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    try {
+        const response = await fetch(id ? API_URL + "/" + encodeURIComponent(id) : API_URL, {
+            method: id ? "PUT" : "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status + " — " + await response.text());
+
+        resetForm();
+        await loadCustomers();
+        switchPage("customers");
+        showMessage("directoryMessage", id ? "Customer updated successfully." : "Customer added successfully.");
+    } catch (e) {
+        showMessage("formMessage", "Could not save customer. " + e.message, true);
+    } finally {
+        button.disabled = false;
+        button.textContent = document.getElementById("customerId").value ? "Save Changes" : "+ Add Customer";
+    }
+});
+
+document.getElementById("clearButton").addEventListener("click", resetForm);
+document.getElementById("newCustomerButton").addEventListener("click", () => {
+    resetForm();
+    switchPage("dashboard");
+    document.getElementById("customerFormPanel").scrollIntoView({behavior:"smooth"});
+});
+document.getElementById("refreshButton").addEventListener("click", loadCustomers);
+searchInput.addEventListener("input", renderCustomers);
+
+/* Administrator profile menu */
+document.getElementById("adminProfile").addEventListener("click", () => {
+    document.getElementById("profileMenu").classList.toggle("show");
+});
+document.getElementById("closeProfile").addEventListener("click", () => {
+    document.getElementById("profileMenu").classList.remove("show");
+});
+document.addEventListener("click", event => {
+    const wrap = document.querySelector(".profile-wrap");
+    if (!wrap.contains(event.target)) {
+        document.getElementById("profileMenu").classList.remove("show");
+    }
+});
+
+/* Click statistics to open the corresponding customer list */
+document.querySelectorAll(".stat-card").forEach(card => {
+    function openCard() {
+        currentFilter = card.dataset.filter;
+        searchInput.value = "";
+        const labels = {
+            all: "Showing all customers",
+            email: "Showing customers with email addresses",
+            phone: "Showing customers with phone numbers"
+        };
+        document.getElementById("directorySubtitle").textContent = labels[currentFilter];
+        renderCustomers();
+        switchPage("customers");
+    }
+    card.addEventListener("click", openCard);
+    card.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === ""){
+            event.preventDefault();
+            openCard();
+        }
+    });
+});
+
+loadCustomers();
+</script>
+</body>
+</html>
